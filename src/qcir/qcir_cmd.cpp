@@ -630,11 +630,7 @@ dvlab::Command qcir_translate_cmd(QCirMgr& qcir_mgr) {
         },
         [=, &qcir_mgr](ArgumentParser const& parser) {
             auto gate_set = parser.get<std::string>("gate_set");
-            /*
-                Todo:
-                for gate in qcir_mgr:
-                    translate(gate, equivalence_gates)
-            */
+            qcir_mgr.get()->translate(gate_set);
             return CmdExecResult::error;
         }};
 }
