@@ -588,15 +588,14 @@ dvlab::Command qcir_qubit_cmd(QCirMgr& qcir_mgr) {
     return cmd;
 }
 
-dvlab::Command qcir_gate_map_cmd(QCirMgr& qcir_mgr) {
-    static dvlab::utils::ordered_hashmap<std::string, std::string[]> IBM_gates = {
-        {
-            "sherbrooke" : [ "ecr", "id", "rz", "sx", "x" ],
-            "kyiv" : [ "cx", "id", "rz", "sx", "x" ],
-            "prague" : [ "cz", "id", "rz", "sz", "x" ]
-        }};
+dvlab::Command qcir_translate_cmd(QCirMgr& qcir_mgr) {
+    static dvlab::utils::ordered_hashmap<std::string, std::string> gate_set = {
+            {"sherbrooke", "ecr, id, rz, sx, x"},
+            {"kyiv", "cx, id, rz, sx, x"},
+            {"prague", "cz, id, rz, sz, x"}
+        };
 
-    static dvlab::utils::ordered_hashmap<std::string, std::vector<std::string[]>> equivalence_sherbrooke = {
+    /*static dvlab::utils::ordered_hashmap<std::string, std::vector<std::string[]>> equivalence_sherbrooke = {
         {
             "h" : {["rz", "sx", "rz"],
                    [ "pi/2", "0", "pi/2" ]},
@@ -609,32 +608,32 @@ dvlab::Command qcir_gate_map_cmd(QCirMgr& qcir_mgr) {
                     [ "sx", "rz", "ecr", "rz", "sx", "rz" ],
                     [ "0", "pi/2", "0", "pi/2", "0", "pi/2" ]},
             "rz" : {["rz"]},
-        }};
+        }};*/
 
     return {
-        "map",
+        "translate",
         [&](ArgumentParser& parser) {
-            parser.description("map the ZX-optimized circuit into a specific IBM gate set");
+            parser.description("translate the ZX-optimized circuit into a specific IBM gate set");
             std::vector<std::string> type_choices;
 
-            for (auto& [name, _] : IBM_gates) {
+            for (auto& [name, _] : gate_set) {
                 type_choices.emplace_back(name);
             }
 
-            parser.add_argument<std::string>("IBM_machine")
-                .help("the specific IBM_machine")
+            parser.add_argument<std::string>("gate_set")
+                .help("the specific gate set")
                 .constraint(choices_allow_prefix(type_choices));
             /*
                 
                 .constraint(the qcir is extracted from zx, should use qcir_mgr)
             */
         },
-        [&](ArgumentParser const& parser) {
-            auto IBM_machine = parser.get<std::string>("IBM_machine");
+        [=, &qcir_mgr](ArgumentParser const& parser) {
+            auto gate_set = parser.get<std::string>("gate_set");
             /*
                 Todo:
                 for gate in qcir_mgr:
-                    switch(gate, equivalence_IBM_machine)
+                    translate(gate, equivalence_gates)
             */
             return CmdExecResult::error;
         }};
@@ -658,6 +657,7 @@ Command qcir_cmd(QCirMgr& qcir_mgr) {
     cmd.add_subcommand(qcir_gate_cmd(qcir_mgr));
     cmd.add_subcommand(qcir_qubit_cmd(qcir_mgr));
     cmd.add_subcommand(qcir_optimize_cmd(qcir_mgr));
+    cmd.add_subcommand(qcir_translate_cmd(qcir_mgr));
     return cmd;
 }
 
