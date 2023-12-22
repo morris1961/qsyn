@@ -467,6 +467,9 @@ void QCir::print_gate_statistics(bool detail) const {
 }
 
 void QCir::translate(std::string gate_set) {
+    //auto equivalence = get_equivalence(gate_set);
+    //auto translate_gate = [](){};
+    //topological_traverse(translate_gate);
 }
 
 }  // namespace qsyn::qcir
