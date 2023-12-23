@@ -517,13 +517,8 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
 }
 
 void QCir::translate(QCir const& qcir, std::string gate_set) {
-    //auto equivalence = get_equivalence(gate_set);
-    //auto translate_gate = [](){};
-    //topological_traverse(translate_gate);
-
     qcir.update_topological_order();
-    QCir translated_qcir;
-    translated_qcir.add_qubits(qcir.get_num_qubits());
+    add_qubits(qcir.get_num_qubits());
     for (auto const* cur_gate : qcir.get_topologically_ordered_gates()) {
         auto bit_range = cur_gate->get_qubits() |
                          std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
