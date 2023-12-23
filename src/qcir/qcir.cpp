@@ -18,6 +18,7 @@
 #include "./qcir_gate.hpp"
 #include "./qcir_qubit.hpp"
 #include "qsyn/qsyn_type.hpp"
+#include "util/data_structure_manager_common_cmd.hpp"
 #include "util/phase.hpp"
 #include "util/text_format.hpp"
 #include "util/util.hpp"
@@ -462,6 +463,57 @@ void QCir::print_gate_statistics(bool detail) const {
 }
 
 void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase phase, std::string gate_set) {
+    using GateInfo = std::tuple<std::string, QubitIdList, dvlab::Phase>;
+    using Equivalence = dvlab::utils::ordered_hashmap<std::string, std::vector<GateInfo>>;
+    static dvlab::utils::ordered_hashmap<std::string, Equivalence> equivalence_library = {
+        {
+            "sherbrooke", {
+                {
+                    "h", {
+                        {"rz", {0}, dvlab::Phase(1, 2)},
+                        {"sx", {0}, dvlab::Phase(0)},
+                        {"rz", {0}, dvlab::Phase(1, 2)},
+                    }
+                },
+                {
+                    "cx", {
+                        {"rz", {0}, dvlab::Phase(3, 2)},
+                        {"rz", {1}, dvlab::Phase(1, 2)},
+                        {"sx", {1}, dvlab::Phase(0)},
+                        {"rz", {1}, dvlab::Phase(1, 2)},
+                        {"ecr", {0, 1}, dvlab::Phase(0)},
+                        {"x", {0}, dvlab::Phase(0)},
+                    }
+                },
+                {
+                    "cz", {
+                        {"rz", {0}, dvlab::Phase(3, 2)},
+                        {"sx", {1}, dvlab::Phase(0)},
+                        {"rz", {1}, dvlab::Phase(1, 2)},
+                        {"ecr", {0, 1}, dvlab::Phase(0)},
+                        {"x", {0}, dvlab::Phase(0)},
+                        {"rz", {1}, dvlab::Phase(1, 2)},
+                        {"sx", {1}, dvlab::Phase(0)},
+                        {"rz", {1}, dvlab::Phase(1, 2)},
+                    }
+                },
+                {
+                    "rz", {
+                        {"rz", {0}, phase},
+                    }
+                }
+            }
+        }
+    };
+
+    Equivalence equivalence = equivalence_library[gate_set];
+    for (auto const& [gate_type, gate_qubit_list, gate_phase] : equivalence[type]) {
+        QubitIdList gate_qubit_id_list;
+        for (auto qubit_num : gate_qubit_list) {
+            gate_qubit_id_list.emplace_back(bits[qubit_num]);
+        }
+        this->add_gate(gate_type, gate_qubit_id_list, gate_phase, true);
+    }
 }
 
 void QCir::translate(QCir const& qcir, std::string gate_set) {
