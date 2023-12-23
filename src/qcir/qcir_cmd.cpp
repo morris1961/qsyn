@@ -629,8 +629,11 @@ dvlab::Command qcir_translate_cmd(QCirMgr& qcir_mgr) {
             */
         },
         [=, &qcir_mgr](ArgumentParser const& parser) {
+            QCir translated_qcir;
             auto gate_set = parser.get<std::string>("gate_set");
-            qcir_mgr.get()->translate(gate_set);
+            translated_qcir.translate(*qcir_mgr.get(), gate_set);
+            // TODO: replace?
+            qcir_mgr.set(std::make_unique<QCir>(std::move(translated_qcir)));
             return CmdExecResult::error;
         }};
 }

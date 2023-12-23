@@ -153,7 +153,8 @@ public:
 
     void print_gate_statistics(bool detail = false) const;
 
-    void translate(std::string gate_set);
+    void add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase phase, std::string gate_set);
+    void translate(QCir const& qcir, std::string gate_set);
 
     QCirGateStatistics get_gate_statistics() const;
 
