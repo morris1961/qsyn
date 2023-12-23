@@ -474,31 +474,40 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
             "sherbrooke", {
                 {
                     "h", {
-                        {"rz", {0}, dvlab::Phase(1, 2)},
+                        //{"rz", {0}, dvlab::Phase(1, 2)},
+                        {"s", {0}, dvlab::Phase(0)},
                         {"sx", {0}, dvlab::Phase(0)},
-                        {"rz", {0}, dvlab::Phase(1, 2)},
+                        //{"rz", {0}, dvlab::Phase(1, 2)},
+                        {"s", {0}, dvlab::Phase(0)},
                     }
                 },
                 {
                     "cx", {
-                        {"rz", {0}, dvlab::Phase(3, 2)},
-                        {"rz", {1}, dvlab::Phase(1, 2)},
+                        //{"rz", {0}, dvlab::Phase(3, 2)},
+                        {"sdg", {0}, dvlab::Phase(0)},
+                        //{"rz", {1}, dvlab::Phase(1, 2)},
+                        {"z", {1}, dvlab::Phase(0)},
                         {"sx", {1}, dvlab::Phase(0)},
-                        {"rz", {1}, dvlab::Phase(1, 2)},
+                        //{"rz", {1}, dvlab::Phase(1, 2)},
+                        {"z", {1}, dvlab::Phase(0)},
                         {"ecr", {0, 1}, dvlab::Phase(0)},
                         {"x", {0}, dvlab::Phase(0)},
                     }
                 },
                 {
                     "cz", {
-                        {"rz", {0}, dvlab::Phase(3, 2)},
+                        //{"rz", {0}, dvlab::Phase(3, 2)},
+                        {"sdg", {0}, dvlab::Phase(0)},
                         {"sx", {1}, dvlab::Phase(0)},
-                        {"rz", {1}, dvlab::Phase(1, 2)},
+                        //{"rz", {1}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
                         {"ecr", {0, 1}, dvlab::Phase(0)},
                         {"x", {0}, dvlab::Phase(0)},
-                        {"rz", {1}, dvlab::Phase(1, 2)},
+                        //{"rz", {1}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
                         {"sx", {1}, dvlab::Phase(0)},
-                        {"rz", {1}, dvlab::Phase(1, 2)},
+                        //{"rz", {1}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
                     }
                 },
                 {
