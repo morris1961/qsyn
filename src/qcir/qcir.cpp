@@ -466,10 +466,23 @@ void QCir::print_gate_statistics(bool detail) const {
     fmt::println("Others      : {}", fmt_ext::styled_if_ansi_supported(stat.nct, fmt::fg((stat.nct > 0) ? fmt::terminal_color::red : fmt::terminal_color::green) | fmt::emphasis::bold));
 }
 
-void QCir::translate(std::string gate_set) {
+void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase phase, std::string gate_set) {
+}
+
+void QCir::translate(QCir const& qcir, std::string gate_set) {
     //auto equivalence = get_equivalence(gate_set);
     //auto translate_gate = [](){};
     //topological_traverse(translate_gate);
+
+    qcir.update_topological_order();
+    QCir translated_qcir;
+    for (auto const* cur_gate : qcir.get_topologically_ordered_gates()) {
+        auto bit_range = cur_gate->get_qubits() |
+                         std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
+        add_translated_gates(cur_gate->get_type_str(), {bit_range.begin(), bit_range.end()},
+			     cur_gate->get_phase(), gate_set);
+    }
+    update_gate_time();
 }
 
 }  // namespace qsyn::qcir
