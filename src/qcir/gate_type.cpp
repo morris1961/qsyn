@@ -19,6 +19,8 @@ std::optional<GateType> str_to_gate_type(std::string_view str) {
         return GateType{GateRotationCategory::h, 1, dvlab::Phase(1)};
     if (str == "swap")
         return GateType{GateRotationCategory::swap, 2, dvlab::Phase(1)};
+    if (str == "ecr")
+        return GateType{GateRotationCategory::ecr, 2, dvlab::Phase(0)};
 
     std::optional<size_t> num_qubits = 1;
     if (str.starts_with("mc")) {
@@ -84,6 +86,8 @@ std::string gate_type_to_str(GateRotationCategory category, std::optional<size_t
         return "h";
     if (category == GateRotationCategory::swap)
         return "swap";
+    if (category == GateRotationCategory::ecr)
+        return "ecr";
 
     std::string type_str = std::invoke([num_qubits]() {
         if (!num_qubits.has_value()) {
