@@ -528,6 +528,7 @@ void QCir::translate(QCir const& qcir, std::string gate_set) {
 
     qcir.update_topological_order();
     QCir translated_qcir;
+    translated_qcir.add_qubits(qcir.get_num_qubits());
     for (auto const* cur_gate : qcir.get_topologically_ordered_gates()) {
         auto bit_range = cur_gate->get_qubits() |
                          std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
