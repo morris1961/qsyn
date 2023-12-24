@@ -120,6 +120,11 @@ private:
     void _cancel_double_gate(QCir& qcir, QCirGate* prev_gate, QCirGate* gate);
     void _fuse_z_phase(QCir& qcir, QCirGate* prev_gate, QCirGate* gate);
     void _fuse_x_phase(QCir& qcir, QCirGate* prev_gate, QCirGate* gate);
+    size_t _match_gate_sequence(std::vector<std::string> const& type_seq, std::vector<std::string> const& target_seq);
+    void _replace_gate_sequence(QCir& qcir, QCir& replaced, QubitIdType qubit, size_t gate_num,
+                                size_t seq_len, std::vector<std::string> const& seq);
+    void _sherbrooke_pre_optimization(QCir& pre_opt);
+    void _sherbrooke_post_optimization(QCir& result);
 };
 
 }  // namespace qsyn::qcir
