@@ -30,6 +30,7 @@ std::optional<QCir> Optimizer::trivial_optimization(QCir const& qcir) {
     QCir pre_opt;
     pre_opt.add_procedures(qcir.get_procedures());
     pre_opt.add_qubits(qcir.get_num_qubits());
+    pre_opt.set_gate_set(qcir.get_gate_set());
     for (auto gate : qcir.get_topologically_ordered_gates()) {
         auto bit_range = gate->get_qubits() |
                          std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
@@ -42,6 +43,7 @@ std::optional<QCir> Optimizer::trivial_optimization(QCir const& qcir) {
     result.set_filename(pre_opt.get_filename());
     result.add_procedures(pre_opt.get_procedures());
     result.add_qubits(pre_opt.get_num_qubits());
+    result.set_gate_set(pre_opt.get_gate_set());
 
     pre_opt.update_topological_order();
     auto const gate_list = pre_opt.get_topologically_ordered_gates();
@@ -77,6 +79,55 @@ std::optional<QCir> Optimizer::trivial_optimization(QCir const& qcir) {
     }
 
     _sherbrooke_post_optimization(result);
+
+    pre_opt = QCir();
+    pre_opt.add_procedures(result.get_procedures());
+    pre_opt.add_qubits(result.get_num_qubits());
+    pre_opt.set_gate_set(result.get_gate_set());
+    result.update_topological_order();
+    for (auto gate : result.get_topologically_ordered_gates()) {
+        auto bit_range = gate->get_qubits() |
+                         std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
+        pre_opt.add_gate(gate->get_type_str(), {bit_range.begin(), bit_range.end()},
+                         gate->get_phase(), true);
+    }
+    result = QCir();
+    result.set_filename(pre_opt.get_filename());
+    result.add_procedures(pre_opt.get_procedures());
+    result.add_qubits(pre_opt.get_num_qubits());
+    result.set_gate_set(pre_opt.get_gate_set());
+
+    pre_opt.update_topological_order();
+    for (auto gate : pre_opt.get_topologically_ordered_gates()) {
+        if (stop_requested()) {
+            spdlog::warn("optimization interrupted");
+            return std::nullopt;
+        }
+        auto const last_layer = _get_first_layer_gates(result, true);
+        auto const qubit      = gate->get_targets()._qubit;
+        if (last_layer[qubit] == nullptr) {
+            Optimizer::_add_gate_to_circuit(result, gate, false);
+            continue;
+        }
+        QCirGate* previous_gate = last_layer[qubit];
+        if (is_double_qubit_gate(gate)) {
+            auto const q2 = gate->get_targets()._qubit;
+            if (previous_gate->get_id() != last_layer[q2]->get_id()) {
+                // 2-qubit gate do not match up
+                Optimizer::_add_gate_to_circuit(result, gate, false);
+                continue;
+            }
+            _cancel_double_gate(result, previous_gate, gate);
+        } else if (is_single_z_rotation(gate) && is_single_z_rotation(previous_gate)) {
+            _fuse_z_phase(result, previous_gate, gate);
+        } else if (is_single_x_rotation(gate) && is_single_x_rotation(previous_gate)) {
+            _fuse_x_phase(result, previous_gate, gate);
+        } else if (gate->get_rotation_category() == previous_gate->get_rotation_category()) {
+            result.remove_gate(previous_gate->get_id());
+        } else {
+            Optimizer::_add_gate_to_circuit(result, gate, false);
+        }
+    }
 
     spdlog::info("Finished trivial optimization");
     return result;
@@ -217,6 +268,7 @@ void Optimizer::_replace_gate_sequence(QCir& qcir, QCir& replaced, QubitIdType q
                                        size_t seq_len, std::vector<std::string> const& seq) {
     replaced.add_procedures(qcir.get_procedures());
     replaced.add_qubits(qcir.get_num_qubits());
+    replaced.set_gate_set(qcir.get_gate_set());
     qcir.update_topological_order();
     auto const gate_list = qcir.get_topologically_ordered_gates();
     size_t replace_count = 0;
@@ -285,7 +337,8 @@ void Optimizer::_sherbrooke_pre_optimization(QCir& pre_opt) {
                     pre_opt = QCir();
                     pre_opt.add_procedures(replaced.get_procedures());
                     pre_opt.add_qubits(replaced.get_num_qubits());
-		    replaced.update_topological_order();
+                    pre_opt.set_gate_set(replaced.get_gate_set());
+                    replaced.update_topological_order();
                     for (auto gate : replaced.get_topologically_ordered_gates()) {
                          auto bit_range = gate->get_qubits() |
                                           std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
@@ -332,7 +385,8 @@ void Optimizer::_sherbrooke_post_optimization(QCir& pre_opt) {
                     pre_opt = QCir();
                     pre_opt.add_procedures(replaced.get_procedures());
                     pre_opt.add_qubits(replaced.get_num_qubits());
-		    replaced.update_topological_order();
+                    pre_opt.set_gate_set(replaced.get_gate_set());
+                    replaced.update_topological_order();
                     for (auto gate : replaced.get_topologically_ordered_gates()) {
                          auto bit_range = gate->get_qubits() |
                                           std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
