@@ -26,12 +26,25 @@ std::optional<QCir> Optimizer::trivial_optimization(QCir const& qcir) {
     spdlog::info("Start trivial optimization");
 
     reset(qcir);
-    QCir result;
-    result.set_filename(qcir.get_filename());
-    result.add_procedures(qcir.get_procedures());
-    result.add_qubits(qcir.get_num_qubits());
 
-    auto const gate_list = qcir.get_topologically_ordered_gates();
+    QCir pre_opt;
+    pre_opt.add_procedures(qcir.get_procedures());
+    pre_opt.add_qubits(qcir.get_num_qubits());
+    for (auto gate : qcir.get_topologically_ordered_gates()) {
+        auto bit_range = gate->get_qubits() |
+                         std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
+        pre_opt.add_gate(gate->get_type_str(), {bit_range.begin(), bit_range.end()},
+                         gate->get_phase(), true);
+    }
+    _sherbrooke_pre_optimization(pre_opt);
+
+    QCir result;
+    result.set_filename(pre_opt.get_filename());
+    result.add_procedures(pre_opt.get_procedures());
+    result.add_qubits(pre_opt.get_num_qubits());
+
+    pre_opt.update_topological_order();
+    auto const gate_list = pre_opt.get_topologically_ordered_gates();
     for (auto gate : gate_list) {
         if (stop_requested()) {
             spdlog::warn("optimization interrupted");
@@ -62,6 +75,9 @@ std::optional<QCir> Optimizer::trivial_optimization(QCir const& qcir) {
             Optimizer::_add_gate_to_circuit(result, gate, false);
         }
     }
+
+    _sherbrooke_post_optimization(result);
+
     spdlog::info("Finished trivial optimization");
     return result;
 }
@@ -116,7 +132,7 @@ void Optimizer::_fuse_x_phase(QCir& qcir, QCirGate* prev_gate, QCirGate* gate) {
         QubitIdList qubit_list;
         qubit_list.emplace_back(prev_gate->get_targets()._qubit);
         qcir.remove_gate(prev_gate->get_id());
-        qcir.add_gate("p", qubit_list, phase, true);
+        qcir.add_gate("px", qubit_list, phase, true);
     }
 }
 
@@ -161,6 +177,165 @@ void Optimizer::_cancel_double_gate(QCir& qcir, QCirGate* prev_gate, QCirGate* g
         qcir.remove_gate(prev_gate->get_id());
     else
         Optimizer::_add_gate_to_circuit(qcir, gate, false);
+}
+
+size_t Optimizer::_match_gate_sequence(std::vector<std::string> const& type_seq,
+                                       std::vector<std::string> const& target_seq) {
+    if (type_seq.size() < target_seq.size()) {
+        return type_seq.size();
+    }
+    for (size_t i = 0; i < type_seq.size() - target_seq.size(); i++) {
+        bool match = true;
+        for (size_t j = 0; j < target_seq.size(); j++) {
+            if (type_seq[i + j] != target_seq[j]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) {
+            return i;
+        }
+    }
+    return type_seq.size();
+}
+
+void Optimizer::_replace_gate_sequence(QCir& qcir, QCir& replaced, QubitIdType qubit, size_t gate_num,
+                                       size_t seq_len, std::vector<std::string> const& seq) {
+    replaced.add_procedures(qcir.get_procedures());
+    replaced.add_qubits(qcir.get_num_qubits());
+    qcir.update_topological_order();
+    auto const gate_list = qcir.get_topologically_ordered_gates();
+    size_t replace_count = 0;
+
+    if (gate_num == 0) {
+        replace_count = seq_len;
+    }
+    for (auto gate : gate_list) {
+        auto bit_range = gate->get_qubits() |
+                         std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
+        if (gate->get_targets()._qubit != qubit) {
+            replaced.add_gate(gate->get_type_str(), {bit_range.begin(), bit_range.end()}, gate->get_phase(), true);
+            continue;
+        }
+
+	if (gate_num != 0) {
+            replaced.add_gate(gate->get_type_str(), {bit_range.begin(), bit_range.end()}, gate->get_phase(), true);
+            gate_num--;
+            if (gate_num == 0) {
+                replace_count = seq_len;
+            }
+            continue;
+	}
+
+        if (replace_count == 0) {
+            replaced.add_gate(gate->get_type_str(), {bit_range.begin(), bit_range.end()}, gate->get_phase(), true);
+            continue;
+        }
+
+        if (replace_count == seq_len) {
+            for (auto& type : seq) {
+                replaced.add_gate(type, {bit_range.begin(), bit_range.end()}, dvlab::Phase(0), true);
+            }
+            replace_count--;
+            continue;
+        }
+        replace_count--;
+    }
+}
+
+void Optimizer::_sherbrooke_pre_optimization(QCir& pre_opt) {
+    static std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>> replace_rules = {
+        {{"z", "sx", "z"}, {"sxdg"}},
+        {{"s", "sx", "s", "sx", "s"}, {"sxdg"}}
+    };
+
+    for (size_t i = 0; i < pre_opt.get_num_qubits(); i++) {
+        while (true) {
+            pre_opt.update_topological_order();
+            auto const gate_list = pre_opt.get_topologically_ordered_gates();
+            std::vector<std::string> type_seq;
+            for (auto gate : gate_list) {
+                if ((size_t)gate->get_targets()._qubit != i) {
+                    continue;
+                }
+                type_seq.emplace_back(gate->get_type_str());
+            }
+
+            bool found = false;
+            for (auto const& [lhs, rhs] : replace_rules) {
+                size_t g = _match_gate_sequence(type_seq, lhs);
+                if (g != type_seq.size()) {
+                    QCir replaced;
+                    _replace_gate_sequence(pre_opt, replaced, i, g, lhs.size(), rhs);
+
+                    pre_opt = QCir();
+                    pre_opt.add_procedures(replaced.get_procedures());
+                    pre_opt.add_qubits(replaced.get_num_qubits());
+		    replaced.update_topological_order();
+                    for (auto gate : replaced.get_topologically_ordered_gates()) {
+                         auto bit_range = gate->get_qubits() |
+                                          std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
+                         pre_opt.add_gate(gate->get_type_str(), {bit_range.begin(), bit_range.end()},
+                                          gate->get_phase(), true);
+                    }
+
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                break;
+            }
+        }
+    }
+}
+
+void Optimizer::_sherbrooke_post_optimization(QCir& pre_opt) {
+    static std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>> replace_rules = {
+        {{"sxdg"}, {"z", "sx", "z"}}
+    };
+
+    for (size_t i = 0; i < pre_opt.get_num_qubits(); i++) {
+        while (true) {
+            pre_opt.update_topological_order();
+            auto const gate_list = pre_opt.get_topologically_ordered_gates();
+            std::vector<std::string> type_seq;
+            for (auto gate : gate_list) {
+                if ((size_t)gate->get_targets()._qubit != i) {
+                    continue;
+                }
+                type_seq.emplace_back(gate->get_type_str());
+            }
+
+            bool found = false;
+            for (auto const& [lhs, rhs] : replace_rules) {
+                size_t g = _match_gate_sequence(type_seq, lhs);
+                if (g != type_seq.size()) {
+                    QCir replaced;
+                    _replace_gate_sequence(pre_opt, replaced, i, g, lhs.size(), rhs);
+
+                    pre_opt = QCir();
+                    pre_opt.add_procedures(replaced.get_procedures());
+                    pre_opt.add_qubits(replaced.get_num_qubits());
+		    replaced.update_topological_order();
+                    for (auto gate : replaced.get_topologically_ordered_gates()) {
+                         auto bit_range = gate->get_qubits() |
+                                          std::views::transform([](QubitInfo const &qb) { return qb._qubit; });
+                         pre_opt.add_gate(gate->get_type_str(), {bit_range.begin(), bit_range.end()},
+                                          gate->get_phase(), true);
+                    }
+
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                break;
+            }
+        }
+    }
 }
 
 }  // namespace qsyn::qcir
