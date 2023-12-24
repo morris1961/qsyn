@@ -546,7 +546,133 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
                     }
                 }
             }
-        }
+        },
+        {
+            "kyiv", {
+                {
+                    "h", {
+                        // {"rz", {0}, dvlab::Phase(1, 2)},
+                        {"s", {0}, dvlab::Phase(0)},
+                        {"sx", {0}, dvlab::Phase(0)},
+                        // {"rz", {0}, dvlab::Phase(1, 2)},
+                        {"s", {0}, dvlab::Phase(0)},
+                    }
+                },
+                {
+                    "cx", {
+                        {"cx", bits, phase},
+                    }
+                },
+                {
+                    "cz", {
+                        // {"rz", {0}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
+                        {"sx", {1}, dvlab::Phase(0)},
+                        // {"rz", {1}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
+                        {"cx", {0, 1}, dvlab::Phase(0)},
+                        // {"rz", {0}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
+                        {"sx", {1}, dvlab::Phase(0)},
+                        // {"rz", {1}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
+                    }
+                },
+                {
+                    "rz", {
+                        {"rz", {0}, phase},
+                    }
+                },
+                {
+                    "z", {
+                        {"z", {0}, phase},
+                    }
+                },
+                {
+                    "s", {
+                        {"s", {0}, phase},
+                    }
+                },
+                {
+                    "sdg", {
+                        {"sdg", {0}, phase},
+                    }
+                },
+                {
+                    "t", {
+                        {"t", {0}, phase},
+                    }
+                },
+                {
+                    "tdg", {
+                        {"tdg", {0}, phase},
+                    }
+                }
+            }
+        },
+        {
+            "prague", {
+                {
+                    "h", {
+                        // {"rz", {0}, dvlab::Phase(1, 2)},
+                        {"s", {0}, dvlab::Phase(0)},
+                        {"sx", {0}, dvlab::Phase(0)},
+                        // {"rz", {0}, dvlab::Phase(1, 2)},
+                        {"s", {0}, dvlab::Phase(0)},
+                    }
+                },
+                {
+                    "cx", {
+                        // {"rz", {0}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
+                        {"sx", {1}, dvlab::Phase(0)},
+                        // {"rz", {1}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
+                        {"cx", {0, 1}, dvlab::Phase(0)},
+                        // {"rz", {0}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
+                        {"sx", {1}, dvlab::Phase(0)},
+                        // {"rz", {1}, dvlab::Phase(1, 2)},
+                        {"s", {1}, dvlab::Phase(0)},
+                    }
+                },
+                {
+                    "cz", {
+                        {"cz", bits, phase},
+                    }
+                },
+                {
+                    "rz", {
+                        {"rz", {0}, phase},
+                    }
+                },
+                {
+                    "z", {
+                        {"z", {0}, phase},
+                    }
+                },
+                {
+                    "s", {
+                        {"s", {0}, phase},
+                    }
+                },
+                {
+                    "sdg", {
+                        {"sdg", {0}, phase},
+                    }
+                },
+                {
+                    "t", {
+                        {"t", {0}, phase},
+                    }
+                },
+                {
+                    "tdg", {
+                        {"tdg", {0}, phase},
+                    }
+                }
+            }
+        },
     };
 
     Equivalence equivalence = equivalence_library[gate_set];

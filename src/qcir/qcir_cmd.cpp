@@ -589,13 +589,13 @@ dvlab::Command qcir_qubit_cmd(QCirMgr& qcir_mgr) {
 }
 
 dvlab::Command qcir_translate_cmd(QCirMgr& qcir_mgr) {
-    static dvlab::utils::ordered_hashmap<std::string, std::string> gate_set = {
+    /*static dvlab::utils::ordered_hashmap<std::string, std::string> gate_set = {
             {"sherbrooke", "ecr, id, rz, sx, x"},
             {"kyiv", "cx, id, rz, sx, x"},
             {"prague", "cz, id, rz, sz, x"}
         };
-
-    /*static dvlab::utils::ordered_hashmap<std::string, std::vector<std::string[]>> equivalence_sherbrooke = {
+    
+    static dvlab::utils::ordered_hashmap<std::string, std::vector<std::string[]>> equivalence_sherbrooke = {
         {
             "h" : {["rz", "sx", "rz"],
                    [ "pi/2", "0", "pi/2" ]},
@@ -614,17 +614,12 @@ dvlab::Command qcir_translate_cmd(QCirMgr& qcir_mgr) {
         "translate",
         [&](ArgumentParser& parser) {
             parser.description("translate the ZX-optimized circuit into a specific IBM gate set");
-            std::vector<std::string> type_choices;
-
-            for (auto& [name, _] : gate_set) {
-                type_choices.emplace_back(name);
-            }
 
             parser.add_argument<std::string>("gate_set")
-                .help("the specific gate set")
-                .constraint(choices_allow_prefix(type_choices));
+                .help("the specific gate set ('sherbrooke', 'kyiv', 'prague')")
+                .choices(std::initializer_list<std::string>{"sherbrooke", "kyiv", "prague"});
+
             /*
-                
                 .constraint(the qcir is extracted from zx, should use qcir_mgr)
             */
         },
@@ -633,8 +628,10 @@ dvlab::Command qcir_translate_cmd(QCirMgr& qcir_mgr) {
             auto gate_set = parser.get<std::string>("gate_set");
             translated_qcir.translate(*qcir_mgr.get(), gate_set);
             // TODO: replace?
+            std::string filename = qcir_mgr.get()->get_filename();
             qcir_mgr.set(std::make_unique<QCir>(std::move(translated_qcir)));
-            return CmdExecResult::error;
+            qcir_mgr.get()->set_filename(filename);
+            return CmdExecResult::done;
         }};
 }
 
