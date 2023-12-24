@@ -312,7 +312,8 @@ void Optimizer::_replace_gate_sequence(QCir& qcir, QCir& replaced, QubitIdType q
 void Optimizer::_sherbrooke_pre_optimization(QCir& pre_opt) {
     static std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>> replace_rules = {
         {{"z", "sx", "z"}, {"sxdg"}},
-        {{"s", "sx", "s", "sx", "s"}, {"sxdg"}}
+        {{"s", "sx", "s", "sx", "s"}, {"sxdg"}},
+        {{"sdg", "sx", "sdg", "sx", "sdg"}, {"sxdg"}}
     };
 
     for (size_t i = 0; i < pre_opt.get_num_qubits(); i++) {
@@ -360,7 +361,10 @@ void Optimizer::_sherbrooke_pre_optimization(QCir& pre_opt) {
 
 void Optimizer::_sherbrooke_post_optimization(QCir& pre_opt) {
     static std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>> replace_rules = {
-        {{"sxdg"}, {"z", "sx", "z"}}
+        {{"sxdg", "s", "sxdg", "s", "sxdg"}, {"sdg"}},
+        {{"sxdg"}, {"z", "sx", "z"}},
+        {{"x", "s", "x"}, {"sdg"}},
+        {{"sx", "s", "sx", "s", "sx"}, {"sdg"}}
     };
 
     for (size_t i = 0; i < pre_opt.get_num_qubits(); i++) {
