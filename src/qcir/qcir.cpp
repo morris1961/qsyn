@@ -519,6 +519,31 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
                     "rz", {
                         {"rz", {0}, phase},
                     }
+                },
+                {
+                    "z", {
+                        {"z", {0}, phase},
+                    }
+                },
+                {
+                    "s", {
+                        {"s", {0}, phase},
+                    }
+                },
+                {
+                    "sdg", {
+                        {"sdg", {0}, phase},
+                    }
+                },
+                {
+                    "t", {
+                        {"t", {0}, phase},
+                    }
+                },
+                {
+                    "tdg", {
+                        {"tdg", {0}, phase},
+                    }
                 }
             }
         }
