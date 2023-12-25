@@ -238,7 +238,11 @@ void Optimizer::_cancel_double_gate(QCir& qcir, QCirGate* prev_gate, QCirGate* g
         Optimizer::_add_gate_to_circuit(qcir, gate, false);
         return;
     }
-    if (prev_gate->is_cz() || prev_gate->get_control()._qubit == gate->get_control()._qubit)
+    //if (prev_gate->is_cz() || prev_gate->get_control()._qubit == gate->get_control()._qubit)
+    //    qcir.remove_gate(prev_gate->get_id());
+    if (((prev_gate->is_cx() && gate->is_cx()) || (prev_gate->is_cz() && gate->is_cz())) &&
+        prev_gate->get_control()._qubit == gate->get_control()._qubit &&
+        prev_gate->get_targets()._qubit == gate->get_targets()._qubit)
         qcir.remove_gate(prev_gate->get_id());
     else
         Optimizer::_add_gate_to_circuit(qcir, gate, false);
