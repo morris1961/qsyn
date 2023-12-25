@@ -560,7 +560,7 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
                 },
                 {
                     "cx", {
-                        {"cx", bits, phase},
+                        {"cx", {0, 1}, phase},
                     }
                 },
                 {
@@ -623,14 +623,12 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
                 },
                 {
                     "cx", {
-                        // {"rz", {0}, dvlab::Phase(1, 2)},
-                        {"s", {1}, dvlab::Phase(0)},
-                        {"sx", {1}, dvlab::Phase(0)},
                         // {"rz", {1}, dvlab::Phase(1, 2)},
                         {"s", {1}, dvlab::Phase(0)},
-                        {"cx", {0, 1}, dvlab::Phase(0)},
-                        // {"rz", {0}, dvlab::Phase(1, 2)},
-                        {"s", {1}, dvlab::Phase(0)},
+                        {"sx", {1}, dvlab::Phase(0)},
+                        // {"rz", {1}, dvlab::Phase(1)},
+                        {"z", {1}, dvlab::Phase(0)},
+                        {"cz", {0, 1}, dvlab::Phase(0)},
                         {"sx", {1}, dvlab::Phase(0)},
                         // {"rz", {1}, dvlab::Phase(1, 2)},
                         {"s", {1}, dvlab::Phase(0)},
@@ -638,7 +636,7 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
                 },
                 {
                     "cz", {
-                        {"cz", bits, phase},
+                        {"cz", {0, 1}, phase},
                     }
                 },
                 {
