@@ -363,6 +363,7 @@ void Optimizer::_sherbrooke_post_optimization(QCir& pre_opt) {
     static std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>> replace_rules = {
         {{"sxdg", "s", "sxdg", "s", "sxdg"}, {"sdg"}},
         {{"sxdg"}, {"z", "sx", "z"}},
+        {{"sx", "z", "sx"}, {"z"}},
         {{"x", "s", "x"}, {"sdg"}},
         {{"sx", "s", "sx", "s", "sx"}, {"sdg"}}
     };
