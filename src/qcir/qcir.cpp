@@ -543,6 +543,7 @@ void QCir::translate(QCir const& qcir, std::string gate_set) {
         add_translated_gates(cur_gate->get_type_str(), {bit_range.begin(), bit_range.end()},
 			     cur_gate->get_phase(), gate_set);
     }
+    set_gate_set(gate_set);
     update_gate_time();
 }
 
