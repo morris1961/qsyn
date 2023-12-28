@@ -54,6 +54,7 @@ public:
 
     // trivial optimization
     std::optional<QCir> trivial_optimization(QCir const& qcir);
+    std::optional<QCir> _trivial_optimization_procedure(QCir const& qcir);
 
 private:
     size_t _iter = 0;
@@ -125,6 +126,8 @@ private:
                                 size_t seq_len, std::vector<std::string> const& seq);
     void _sherbrooke_pre_optimization(QCir& pre_opt);
     void _sherbrooke_post_optimization(QCir& result);
+    std::vector<std::string> _zx_optimize(std::vector<std::string> partial);
+    void _partial_zx_optimization(QCir& qcir);
 };
 
 }  // namespace qsyn::qcir

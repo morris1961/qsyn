@@ -490,10 +490,10 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
                     "cx", {
                         //{"rz", {0}, dvlab::Phase(3, 2)},
                         {"sdg", {0}, dvlab::Phase(0)},
-                        //{"rz", {1}, dvlab::Phase(1, 2)},
+                        //{"rz", {1}, dvlab::Phase(1)},
                         {"z", {1}, dvlab::Phase(0)},
                         {"sx", {1}, dvlab::Phase(0)},
-                        //{"rz", {1}, dvlab::Phase(1, 2)},
+                        //{"rz", {1}, dvlab::Phase(1)},
                         {"z", {1}, dvlab::Phase(0)},
                         {"ecr", {0, 1}, dvlab::Phase(0)},
                         {"x", {0}, dvlab::Phase(0)},
@@ -553,6 +553,16 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
                 {
                     "x", {
                         {"x", {0}, phase},
+                    }
+                },
+                {
+                    "sx", {
+                        {"sx", {0}, phase},
+                    }
+                },
+                {
+                    "sxdg", {
+                        {"sxdg", {0}, phase},
                     }
                 }
             }
@@ -627,6 +637,16 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
                     "x", {
                         {"x", {0}, phase},
                     }
+                },
+                {
+                    "sx", {
+                        {"sx", {0}, phase},
+                    }
+                },
+                {
+                    "sxdg", {
+                        {"sxdg", {0}, phase},
+                    }
                 }
             }
         },
@@ -698,6 +718,16 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
                     "x", {
                         {"x", {0}, phase},
                     }
+                },
+                {
+                    "sx", {
+                        {"sx", {0}, phase},
+                    }
+                },
+                {
+                    "sxdg", {
+                        {"sxdg", {0}, phase},
+                    }
                 }
             }
         },
@@ -709,14 +739,21 @@ void QCir::add_translated_gates(std::string type, QubitIdList bits, dvlab::Phase
         for (auto qubit_num : gate_qubit_list) {
             gate_qubit_id_list.emplace_back(bits[qubit_num]);
         }
-        if (gate_type != "rz" && gate_type != "p") {
-            this->add_gate(gate_type, gate_qubit_id_list, gate_phase, true);
+        if (type != "rz" && type != "p") {
+            this->add_gate(gate_type, gate_qubit_id_list, phase, true);
         } else {
-            if (gate_phase == dvlab::Phase(1, 4)) add_gate("t", gate_qubit_id_list, dvlab::Phase(0), true);
-            else if (gate_phase == dvlab::Phase(1, 2)) add_gate("s", gate_qubit_id_list, dvlab::Phase(0), true);
-            else if (gate_phase == dvlab::Phase(1) || gate_phase == dvlab::Phase(-1)) add_gate("z", gate_qubit_id_list, dvlab::Phase(0), true);
-            else if (gate_phase == dvlab::Phase(-1, 2) || gate_phase == dvlab::Phase(3, 2)) add_gate("sdg", gate_qubit_id_list, dvlab::Phase(0), true);
-            else if (gate_phase == dvlab::Phase(-1, 4) || gate_phase == dvlab::Phase(3, 4)) add_gate("tdg", gate_qubit_id_list, dvlab::Phase(0), true);
+		//spdlog::error("phase: {}", phase);	
+            if (phase == dvlab::Phase(1, 4) || phase == dvlab::Phase(-7, 4)) add_gate("t", gate_qubit_id_list, dvlab::Phase(0), true);
+            else if (phase == dvlab::Phase(1, 2) || phase == dvlab::Phase(-3, 2)) add_gate("s", gate_qubit_id_list, dvlab::Phase(0), true);
+            else if (phase == dvlab::Phase(3, 4) || phase == dvlab::Phase(-5, 4)) {
+                add_gate("s", gate_qubit_id_list, dvlab::Phase(0), true);
+                add_gate("t", gate_qubit_id_list, dvlab::Phase(0), true);
+	    } else if (phase == dvlab::Phase(1) || phase == dvlab::Phase(-1)) add_gate("z", gate_qubit_id_list, dvlab::Phase(0), true);
+            else if (phase == dvlab::Phase(5, 4) || phase == dvlab::Phase(-3, 4)) {
+                add_gate("z", gate_qubit_id_list, dvlab::Phase(0), true);
+                add_gate("t", gate_qubit_id_list, dvlab::Phase(0), true);
+	    } else if (phase == dvlab::Phase(3, 2) || phase == dvlab::Phase(-1, 2)) add_gate("sdg", gate_qubit_id_list, dvlab::Phase(0), true);
+            else if (phase == dvlab::Phase(7, 4) || phase == dvlab::Phase(-1, 4)) add_gate("tdg", gate_qubit_id_list, dvlab::Phase(0), true);
         }
     }
 }
