@@ -43,8 +43,10 @@ std::optional<QCir> Optimizer::trivial_optimization(QCir const& qcir) {
     qcirs.emplace_back(_trivial_optimization_procedure(qcir).value());
     size_t best_1 = 0;
     size_t best_2 = 0;
+    size_t best_3 = 0;
     size_t best_size = qcirs[0].get_gates().size();
     size_t best_twoqubit = qcirs[0].get_gate_statistics().twoqubit;
+    size_t best_depth = qcirs[0].calculate_depth();
     for (size_t i = 1; i <= 50; i++) {
 	auto zx = to_zxgraph(qcirs[i - 1], 3).value();
         zx.add_procedure("QC2ZX");
@@ -87,8 +89,16 @@ std::optional<QCir> Optimizer::trivial_optimization(QCir const& qcir) {
             best_twoqubit = twoqubit;
             best_2 = i;
         }
+        size_t depth = qcirs[i].calculate_depth();
+        if (depth < best_depth) {
+            best_depth = depth;
+            best_3 = i;
+        }
     }
+    bool reduce_depth = true;
     bool reduce_twoqubit = false;
+    if (reduce_depth)
+        return qcirs[best_3];
     if (reduce_twoqubit)
         return qcirs[best_2];
     return qcirs[best_1];
